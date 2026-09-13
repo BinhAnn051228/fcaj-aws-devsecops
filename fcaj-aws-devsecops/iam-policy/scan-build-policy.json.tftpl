@@ -1,0 +1,29 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "WriteBuildLogs",
+      "Effect": "Allow",
+      "Action": ["logs:CreateLogStream", "logs:PutLogEvents"],
+      "Resource": "${log_group_arn}:*"
+    },
+    {
+      "Sid": "ReadPipelineArtifacts",
+      "Effect": "Allow",
+      "Action": ["s3:GetObject", "s3:GetObjectVersion"],
+      "Resource": "${artifact_bucket_arn}/*"
+    },
+    {
+      "Sid": "ListArtifactBucket",
+      "Effect": "Allow",
+      "Action": ["s3:ListBucket"],
+      "Resource": "${artifact_bucket_arn}"
+    },
+    {
+      "Sid": "ReadWorkshopSecureString",
+      "Effect": "Allow",
+      "Action": ["ssm:GetParameter", "ssm:GetParameters"],
+      "Resource": "${ssm_parameter_arn}"
+    }
+  ]
+}

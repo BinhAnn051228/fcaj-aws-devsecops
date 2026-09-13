@@ -1,0 +1,47 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "WriteBuildLogs",
+      "Effect": "Allow",
+      "Action": ["logs:CreateLogStream", "logs:PutLogEvents"],
+      "Resource": "${log_group_arn}:*"
+    },
+    {
+      "Sid": "ArtifactBucketList",
+      "Effect": "Allow",
+      "Action": ["s3:ListBucket"],
+      "Resource": "${artifact_bucket_arn}"
+    },
+    {
+      "Sid": "ArtifactObjectReadWrite",
+      "Effect": "Allow",
+      "Action": ["s3:GetObject", "s3:GetObjectVersion", "s3:PutObject"],
+      "Resource": "${artifact_bucket_arn}/*"
+    },
+    {
+      "Sid": "TerraformStateBucketList",
+      "Effect": "Allow",
+      "Action": ["s3:ListBucket"],
+      "Resource": "${state_bucket_arn}"
+    },
+    {
+      "Sid": "TerraformStateReadWrite",
+      "Effect": "Allow",
+      "Action": ["s3:GetObject", "s3:PutObject"],
+      "Resource": "${state_bucket_arn}/${state_key}"
+    },
+    {
+      "Sid": "TerraformLockFile",
+      "Effect": "Allow",
+      "Action": ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"],
+      "Resource": "${state_bucket_arn}/${state_key}.tflock"
+    },
+    {
+      "Sid": "ReadEC2AndVPCForPlanning",
+      "Effect": "Allow",
+      "Action": ["ec2:Describe*"],
+      "Resource": "*"
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+# DEMO ONLY - intentionally insecure.
+# Copy this file to workload/demo_public_ssh.tf to demonstrate Checkov blocking public SSH.
+resource "aws_vpc_security_group_ingress_rule" "demo_public_ssh" {
+  security_group_id = aws_security_group.web.id
+  description       = "INTENTIONALLY INSECURE workshop rule"
+  cidr_ipv4         = "0.0.0.0/0"
+  from_port         = 22
+  to_port           = 22
+  ip_protocol       = "tcp"
+}

@@ -1,0 +1,36 @@
+version: 0.2
+
+env:
+  shell: bash
+
+phases:
+  install:
+    commands:
+      - set -euo pipefail
+      - |
+        curl -sSfL "https://releases.hashicorp.com/terraform/${TF_VERSION}/terraform_${TF_VERSION}_linux_amd64.zip" -o /tmp/terraform.zip
+        unzip -q /tmp/terraform.zip -d /usr/local/bin
+        terraform version
+
+  build:
+    commands:
+      - |
+        set -euo pipefail
+        terraform -chdir="${WORKLOAD_DIR}" init -input=false -reconfigure \
+          -backend-config="bucket=${TF_STATE_BUCKET}" \
+          -backend-config="key=${TF_STATE_KEY}" \
+          -backend-config="region=${AWS_DEFAULT_REGION}" \
+          -backend-config="encrypt=true" \
+          -backend-config="use_lockfile=true"
+        terraform -chdir="${WORKLOAD_DIR}" validate
+        terraform -chdir="${WORKLOAD_DIR}" plan -input=false -out=tfplan
+        terraform -chdir="${WORKLOAD_DIR}" show -no-color tfplan > "${WORKLOAD_DIR}/plan.txt"
+        echo "Terraform plan created. Review plan.txt before approving the pipeline."
+
+artifacts:
+  base-directory: workload
+  files:
+    - tfplan
+    - plan.txt
+    - .terraform.lock.hcl
+  discard-paths: yes

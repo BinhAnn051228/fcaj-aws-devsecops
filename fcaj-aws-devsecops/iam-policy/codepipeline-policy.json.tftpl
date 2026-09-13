@@ -1,0 +1,35 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "ArtifactBucketList",
+      "Effect": "Allow",
+      "Action": ["s3:GetBucketVersioning", "s3:ListBucket"],
+      "Resource": "${artifact_bucket_arn}"
+    },
+    {
+      "Sid": "ArtifactObjectAccess",
+      "Effect": "Allow",
+      "Action": ["s3:GetObject", "s3:GetObjectVersion", "s3:PutObject"],
+      "Resource": "${artifact_bucket_arn}/*"
+    },
+    {
+      "Sid": "UseGitHubConnection",
+      "Effect": "Allow",
+      "Action": ["codeconnections:UseConnection", "codestar-connections:UseConnection"],
+      "Resource": "${connection_arn}"
+    },
+    {
+      "Sid": "RunCodeBuildProjects",
+      "Effect": "Allow",
+      "Action": ["codebuild:StartBuild", "codebuild:BatchGetBuilds"],
+      "Resource": ${codebuild_project_arns_json}
+    },
+    {
+      "Sid": "PublishApprovalNotification",
+      "Effect": "Allow",
+      "Action": ["sns:Publish"],
+      "Resource": "${sns_topic_arn}"
+    }
+  ]
+}

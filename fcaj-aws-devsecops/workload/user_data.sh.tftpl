@@ -1,0 +1,32 @@
+#!/bin/bash
+set -euxo pipefail
+
+dnf install -y python3 python3-pip
+mkdir -p /opt/fcaj-demo
+
+echo '${app_py_b64}' | base64 -d > /opt/fcaj-demo/app.py
+echo '${requirements_b64}' | base64 -d > /opt/fcaj-demo/requirements.txt
+python3 -m pip install --upgrade pip
+python3 -m pip install -r /opt/fcaj-demo/requirements.txt
+
+cat > /etc/systemd/system/fcaj-demo.service <<'SERVICE'
+[Unit]
+Description=FCAJ DevSecOps Demo Web Application
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/fcaj-demo
+Environment=APP_HOST=0.0.0.0
+Environment=APP_PORT=80
+ExecStart=/usr/bin/python3 /opt/fcaj-demo/app.py
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
+SERVICE
+
+systemctl daemon-reload
+systemctl enable --now fcaj-demo.service

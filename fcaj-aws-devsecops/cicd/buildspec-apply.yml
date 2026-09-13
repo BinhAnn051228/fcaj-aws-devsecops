@@ -1,0 +1,66 @@
+version: 0.2
+
+env:
+  shell: bash
+
+phases:
+  install:
+    commands:
+      - set -euo pipefail
+      - |
+        curl -sSfL "https://releases.hashicorp.com/terraform/${TF_VERSION}/terraform_${TF_VERSION}_linux_amd64.zip" -o /tmp/terraform.zip
+        unzip -q /tmp/terraform.zip -d /usr/local/bin
+        terraform version
+
+  build:
+    commands:
+      - |
+        set -euo pipefail
+
+        if [[ "${RUN_MODE}" == "apply" ]]; then
+          : "${CODEBUILD_SRC_DIR_PlanOutput:?PlanOutput artifact is required for apply mode}"
+          cp "${CODEBUILD_SRC_DIR_PlanOutput}/.terraform.lock.hcl" "${WORKLOAD_DIR}/.terraform.lock.hcl"
+          cp "${CODEBUILD_SRC_DIR_PlanOutput}/tfplan" "${WORKLOAD_DIR}/tfplan"
+        fi
+
+        terraform -chdir="${WORKLOAD_DIR}" init -input=false -reconfigure \
+          -backend-config="bucket=${TF_STATE_BUCKET}" \
+          -backend-config="key=${TF_STATE_KEY}" \
+          -backend-config="region=${AWS_DEFAULT_REGION}" \
+          -backend-config="encrypt=true" \
+          -backend-config="use_lockfile=true"
+
+        case "${RUN_MODE}" in
+          apply)
+            echo "Applying the exact Terraform plan that passed manual approval."
+            terraform -chdir="${WORKLOAD_DIR}" apply -input=false tfplan
+            terraform -chdir="${WORKLOAD_DIR}" output
+            ;;
+          smoke)
+            echo "Running post-deploy smoke test."
+            HEALTH_URL="$(terraform -chdir="${WORKLOAD_DIR}" output -raw health_url)"
+            echo "Health endpoint: ${HEALTH_URL}"
+            success=0
+            for attempt in $(seq 1 24); do
+              if curl --fail --silent --show-error --max-time 10 "${HEALTH_URL}" | grep -q '"status":"ok"'; then
+                success=1
+                echo "Smoke test passed on attempt ${attempt}."
+                break
+              fi
+              echo "Attempt ${attempt}/24 failed; waiting 10 seconds for EC2 bootstrap."
+              sleep 10
+            done
+            if [[ "${success}" -ne 1 ]]; then
+              echo "Smoke test failed after all retries." >&2
+              exit 1
+            fi
+            ;;
+          *)
+            echo "Unknown RUN_MODE=${RUN_MODE}" >&2
+            exit 2
+            ;;
+        esac
+
+  post_build:
+    commands:
+      - echo "${RUN_MODE} stage completed successfully."

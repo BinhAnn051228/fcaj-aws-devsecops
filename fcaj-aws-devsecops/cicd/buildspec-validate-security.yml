@@ -1,0 +1,63 @@
+version: 0.2
+
+env:
+  shell: bash
+
+phases:
+  install:
+    runtime-versions:
+      python: 3.12
+    commands:
+      - set -euo pipefail
+      - |
+        curl -sSfL "https://releases.hashicorp.com/terraform/${TF_VERSION}/terraform_${TF_VERSION}_linux_amd64.zip" -o /tmp/terraform.zip
+        unzip -q /tmp/terraform.zip -d /usr/local/bin
+        terraform version
+      - python -m pip install --upgrade pip
+      - python -m pip install -r app/requirements.txt pytest
+      - |
+        if [[ "${RUN_MODE}" == "security" ]]; then
+          python -m pip install bandit checkov
+          curl -sSfL "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" -o /tmp/gitleaks.tar.gz
+          tar -xzf /tmp/gitleaks.tar.gz -C /usr/local/bin gitleaks
+          curl -sSfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin "v${TRIVY_VERSION}"
+          gitleaks version
+          trivy --version
+          checkov --version
+        fi
+
+  pre_build:
+    commands:
+      - set -euo pipefail
+      - test -n "${DEMO_TOKEN:-}" || { echo "SecureString injection failed"; exit 1; }
+      - echo "SSM SecureString was injected successfully; value intentionally not printed."
+
+  build:
+    commands:
+      - |
+        set -euo pipefail
+        case "${RUN_MODE}" in
+          validate)
+            echo "=== Validate and unit test ==="
+            terraform fmt -check -recursive bootstrap platform workload
+            terraform -chdir="${WORKLOAD_DIR}" init -backend=false -input=false
+            terraform -chdir="${WORKLOAD_DIR}" validate
+            python -m compileall -q app
+            pytest -q app/tests
+            ;;
+          security)
+            echo "=== Shift-left security scan ==="
+            gitleaks dir . --config .gitleaks.toml --redact --no-banner
+            bandit -r app -lll -iii
+            trivy fs --scanners vuln --severity HIGH,CRITICAL --exit-code 1 --ignore-unfixed app/
+            checkov -d "${WORKLOAD_DIR}" --framework terraform --compact
+            ;;
+          *)
+            echo "Unknown RUN_MODE=${RUN_MODE}" >&2
+            exit 2
+            ;;
+        esac
+
+  post_build:
+    commands:
+      - echo "${RUN_MODE} stage completed successfully."

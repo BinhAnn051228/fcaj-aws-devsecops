@@ -1,0 +1,7 @@
+project_name        = "fcaj-devsecops"
+environment         = "dev"
+aws_region          = "ap-southeast-1"
+instance_type       = "t3.micro"
+vpc_cidr            = "10.20.0.0/16"
+public_subnet_cidr  = "10.20.10.0/24"
+allowed_http_cidr   = "0.0.0.0/0"
