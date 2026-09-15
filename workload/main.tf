@@ -39,14 +39,22 @@ data "aws_ami" "amazon_linux_2023" {
   }
 }
 
-# checkov:skip=CKV2_AWS_11:VPC Flow Logs are omitted to keep the workshop small and low-cost.
 resource "aws_vpc" "main" {
+  #checkov:skip=CKV2_AWS_11:VPC Flow Logs are intentionally omitted for this low-cost workshop PoC.
+
   cidr_block           = var.vpc_cidr
   enable_dns_support   = true
   enable_dns_hostnames = true
 
   tags = {
     Name = "${local.name}-vpc"
+  }
+}
+resource "aws_default_security_group" "default" {
+  vpc_id = aws_vpc.main.id
+
+  tags = {
+    Name = "${local.name}-default-sg-locked"
   }
 }
 
@@ -60,6 +68,7 @@ resource "aws_internet_gateway" "main" {
 
 # checkov:skip=CKV_AWS_130:A public subnet is intentional for this workshop PoC.
 resource "aws_subnet" "public" {
+  #checkov:skip=CKV_AWS_130:Public subnet and automatic public IPv4 assignment are intentional for the workshop PoC.
   vpc_id                  = aws_vpc.main.id
   cidr_block              = var.public_subnet_cidr
   availability_zone       = data.aws_availability_zones.available.names[0]
@@ -100,6 +109,8 @@ resource "aws_security_group" "web" {
 
 # checkov:skip=CKV_AWS_260:Public HTTP access is intentional for this workshop demo endpoint.
 resource "aws_vpc_security_group_ingress_rule" "http" {
+  #checkov:skip=CKV_AWS_260:Public HTTP access on port 80 is intentional for the workshop demo endpoint.
+
   security_group_id = aws_security_group.web.id
   description       = "Public HTTP access for workshop demo"
   cidr_ipv4         = var.allowed_http_cidr
@@ -118,13 +129,17 @@ resource "aws_vpc_security_group_egress_rule" "all" {
 
 # checkov:skip=CKV_AWS_88:Public IP is intentional for the workshop EC2 demo endpoint.
 resource "aws_instance" "web" {
+  #checkov:skip=CKV_AWS_88:Public IPv4 is intentional so the workshop application can be accessed and smoke-tested directly.
+
   ami                         = data.aws_ami.amazon_linux_2023.id
   instance_type               = var.instance_type
   subnet_id                   = aws_subnet.public.id
   vpc_security_group_ids      = [aws_security_group.web.id]
   associate_public_ip_address = true
-  monitoring                  = true
-  ebs_optimized               = true
+  iam_instance_profile        = var.instance_profile_name
+
+  monitoring    = true
+  ebs_optimized = true
 
   metadata_options {
     http_endpoint = "enabled"
