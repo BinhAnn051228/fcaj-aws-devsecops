@@ -6,7 +6,6 @@ mkdir -p /opt/fcaj-demo
 
 echo '${app_py_b64}' | base64 -d > /opt/fcaj-demo/app.py
 echo '${requirements_b64}' | base64 -d > /opt/fcaj-demo/requirements.txt
-python3 -m pip install --upgrade pip
 python3 -m pip install -r /opt/fcaj-demo/requirements.txt
 
 cat > /etc/systemd/system/fcaj-demo.service <<'SERVICE'
