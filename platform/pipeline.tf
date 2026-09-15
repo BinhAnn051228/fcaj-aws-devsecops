@@ -8,8 +8,8 @@ resource "aws_iam_role_policy" "codepipeline" {
   role = aws_iam_role.codepipeline.id
 
   policy = templatefile("${path.module}/../iam-policy/codepipeline-policy.json.tftpl", {
-    artifact_bucket_arn       = "arn:${data.aws_partition.current.partition}:s3:::${var.pipeline_artifact_bucket}"
-    connection_arn            = aws_codeconnections_connection.github.arn
+    artifact_bucket_arn = "arn:${data.aws_partition.current.partition}:s3:::${var.pipeline_artifact_bucket}"
+    connection_arn      = aws_codeconnections_connection.github.arn
     codebuild_project_arns_json = jsonencode([
       aws_codebuild_project.validate_security.arn,
       aws_codebuild_project.terraform_plan.arn,
@@ -137,7 +137,7 @@ resource "aws_codepipeline" "main" {
       input_artifacts = ["SourceOutput", "PlanOutput"]
 
       configuration = {
-        ProjectName  = aws_codebuild_project.terraform_apply_smoke.name
+        ProjectName   = aws_codebuild_project.terraform_apply_smoke.name
         PrimarySource = "SourceOutput"
         EnvironmentVariables = jsonencode([
           { name = "RUN_MODE", value = "apply", type = "PLAINTEXT" }
@@ -174,7 +174,7 @@ resource "aws_cloudwatch_event_rule" "pipeline_state" {
   description = "Send pipeline success/failure state changes to SNS."
 
   event_pattern = jsonencode({
-    source      = ["aws.codepipeline"]
+    source        = ["aws.codepipeline"]
     "detail-type" = ["CodePipeline Pipeline Execution State Change"]
     detail = {
       pipeline = [aws_codepipeline.main.name]
