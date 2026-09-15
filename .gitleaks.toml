@@ -1,0 +1,12 @@
+title = "FCAJ DevSecOps Gitleaks Configuration"
+minVersion = "v8.25.0"
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Workshop demo fixtures only"
+paths = [
+  '''(^|/)demo/fixtures/secret_leak\.py\.example$''',
+  '''(^|/)demo/README\.md$'''
+]

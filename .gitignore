@@ -1,0 +1,32 @@
+# Terraform
+.terraform/
+.terraform-cache/
+*.tfstate
+*.tfstate.*
+*.tfplan
+plan.txt
+crash.log
+
+# Local Terraform variables
+*.tfvars
+!*.tfvars.example
+
+# Python
+__pycache__/
+.pytest_cache/
+*.pyc
+.venv/
+
+# Secrets / local environment
+.env
+*.pem
+*.key
+
+# IDE / OS
+.idea/
+.vscode/
+.DS_Store
+
+# Workshop-generated demo files
+workload/demo_public_ssh.tf
+app/demo_secret_leak.py
