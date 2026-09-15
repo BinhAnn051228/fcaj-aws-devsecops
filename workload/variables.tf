@@ -45,3 +45,8 @@ variable "tags" {
   description = "Additional resource tags."
   default     = {}
 }
+variable "instance_profile_name" {
+  type        = string
+  description = "IAM instance profile attached to the demo EC2 instance."
+}
+

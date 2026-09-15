@@ -8,6 +8,14 @@
       "Resource": "${log_group_arn}:*"
     },
     {
+      "Sid": "ReadEC2InstanceProfile",
+      "Effect": "Allow",
+      "Action": [
+        "iam:GetInstanceProfile"
+      ],
+      "Resource": "${instance_profile_arn}"
+    },
+    {
       "Sid": "ArtifactBucketList",
       "Effect": "Allow",
       "Action": ["s3:ListBucket"],

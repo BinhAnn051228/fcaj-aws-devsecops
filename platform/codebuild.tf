@@ -151,6 +151,10 @@ resource "aws_codebuild_project" "terraform_plan" {
       name  = "TF_VAR_instance_type"
       value = var.instance_type
     }
+    environment_variable {
+      name  = "TF_VAR_instance_profile_name"
+      value = aws_iam_instance_profile.ec2_demo.name
+    }
   }
 
   logs_config {
@@ -236,6 +240,10 @@ resource "aws_codebuild_project" "terraform_apply_smoke" {
     environment_variable {
       name  = "TF_VAR_instance_type"
       value = var.instance_type
+    }
+    environment_variable {
+      name  = "TF_VAR_instance_profile_name"
+      value = aws_iam_instance_profile.ec2_demo.name
     }
   }
 

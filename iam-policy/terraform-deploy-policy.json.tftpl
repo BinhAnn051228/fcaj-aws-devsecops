@@ -44,6 +44,28 @@
       "Resource": "*"
     },
     {
+      "Sid": "ReadEC2InstanceProfile",
+      "Effect": "Allow",
+      "Action": [
+        "iam:GetInstanceProfile"
+      ],
+      "Resource": "${instance_profile_arn}"
+    },
+    {
+      "Sid": "PassWorkshopEC2Role",
+      "Effect": "Allow",
+      "Action": [
+        "iam:PassRole"
+      ],
+      "Resource": "${ec2_role_arn}",
+      "Condition": {
+        "StringEquals": {
+          "iam:PassedToService": "ec2.amazonaws.com"
+        }
+      }
+    },
+      
+    {
       "Sid": "ManageWorkshopEC2AndVPC",
       "Effect": "Allow",
       "Action": [
